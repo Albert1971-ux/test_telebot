@@ -1,75 +1,83 @@
 import asyncio
 import logging
+import os
 
-import requests
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F, types
+from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart, Command
-from aiogram.types import Message
-from aiogram.client.default import DefaultBotProperties  # <- ДОБАВИЛИ ЭТО
+from aiogram.filters import Command
 
-API_TOKEN = "7967873974:AAGWPbhnHjQ-Yjvg3QIPH2eBz1TtiMv5Sco"
-WEATHER_API_KEY = "0b19c70f069eb509882e45bc89f535ce"
-CITY = "Syktyvkar"
+from deep_translator import GoogleTranslator
+
+
+from config import API_TOKEN, CITY_NAME  # берем токен и город из config.py
+
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(
     token=API_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)  # <- ВОТ ТАК ТЕПЕРЬ
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
 )
 dp = Dispatcher()
 
 
-
-@dp.message(CommandStart())
-async def cmd_start(message: Message):
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message):
     await message.answer(
-        "Привет, бро! Я бот-прогноз погоды для Сыктывкара.\n"
-        "Нажми /help, чтобы узнать, что я умею."
+        "Привет, бро! Я рабочий бот.\n"
+        "Пока что я просто отвечаю на /start.\n"
+        "Дальше добавим погоду, картинки, голос и перевод текста."
+    )
+
+@dp.message(Command("help"))
+async def cmd_help(message: types.Message):
+    await message.answer(
+        "Я умею:\n"
+        "• /start — кратко рассказываю о себе.\n"
+        "• /ping — показываю, что бот живой.\n"
+        "• Фото — сохраняю картинку в папку img на сервере.\n"
+        "• Голосовое — принимаю голос и отвечаю, что получил его.\n"
+        "• Любой текст — перевожу на английский язык."
     )
 
 
-@dp.message(Command(commands=["help"]))
-async def cmd_help(message: Message):
+@dp.message(Command("ping"))
+async def cmd_ping(message: types.Message):
+    await message.answer("Бот живой, бро ✅")
+
+
+@dp.message(F.photo)
+async def save_photo(message: types.Message):
+    photo = message.photo[-1]
+    os.makedirs("img", exist_ok=True)
+    file_name = f"{message.from_user.id}_{photo.file_id}.jpg"
+    file_path = os.path.join("img", file_name)
+
+    await bot.download(photo, destination=file_path)
+
+    await message.answer(f"Фото сохранено в img/{file_name} ✅")
+
+
+@dp.message(F.voice)
+async def handle_voice(message: types.Message):
     await message.answer(
-        "Доступные команды:\n"
-        "/start - начать работу с ботом\n"
-        "/help - показать это сообщение\n"
-        "/weather - показать текущую погоду в Сыктывкаре"
+        "Голосовое сообщение получил 🎤\n"
+        "Пока я его просто принимаю, без распознавания."
     )
 
 
-@dp.message(Command(commands=["weather"]))
-async def cmd_weather(message: Message):
+@dp.message(F.text)
+async def translate_to_english(message: types.Message):
+    original_text = message.text
     try:
-        url = (
-            "https://api.openweathermap.org/data/2.5/weather"
-            f"?q={CITY}&appid={WEATHER_API_KEY}&units=metric&lang=ru"
-        )
-        response = requests.get(url, timeout=10)
-        print("STATUS:", response.status_code)
-        print("TEXT:", response.text)
-
-        data = response.json()
-
-        if data.get("cod") != 200:
-            await message.answer(f"Ошибка от сервиса погоды: {data.get('message', 'неизвестно')}")
-            return
-
-        temp = data["main"]["temp"]
-        description = data["weather"][0]["description"]
-
+        translated = GoogleTranslator(source='auto', target='en').translate(original_text)
         await message.answer(
-            f"Погода в {CITY}:\n"
-            f"🌡 Температура: {temp}°C\n"
-            f"🌥 Условия: {description}"
+            "Перевод на английский:\n"
+            f"<b>{translated}</b>"
         )
-    except Exception as e:
-        await message.answer("Произошла ошибка при получении погоды.")
-        print("EXCEPTION:", e)
-
-
+    except Exception:
+        await message.answer("Не получилось перевести текст 😔")
 
 async def main():
     await dp.start_polling(bot)
@@ -77,5 +85,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
