@@ -10,13 +10,13 @@ from aiogram.filters import Command
 from deep_translator import GoogleTranslator
 
 
-from config import API_TOKEN, CITY_NAME  # берем токен и город из config.py
+from config import BOT_TOKEN, CITY_NAME  # берем токен и город из config.py
 
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(
-    token=API_TOKEN,
+    token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML),
 )
 dp = Dispatcher()
