@@ -10,13 +10,21 @@ from aiogram.filters import Command
 from deep_translator import GoogleTranslator
 
 
+<<<<<<< HEAD
 from config import BOT_TOKEN, CITY_NAME  # берем токен и город из config.py
+=======
+from config import API_TOKEN, CITY_NAME  # берем токен и город из config.py
+>>>>>>> 63a172d8ba8be24bb0251144a09679ca00ee4a03
 
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(
+<<<<<<< HEAD
     token=BOT_TOKEN,
+=======
+    token=API_TOKEN,
+>>>>>>> 63a172d8ba8be24bb0251144a09679ca00ee4a03
     default=DefaultBotProperties(parse_mode=ParseMode.HTML),
 )
 dp = Dispatcher()
@@ -85,3 +93,9 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 63a172d8ba8be24bb0251144a09679ca00ee4a03
